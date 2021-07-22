@@ -71,8 +71,10 @@ fi
 
 prep_unit
 
+compile='-Wall -g -std=gnu99 lib/*.o zstd/zlibWrapper/gz*.c -I include/ -I src/ -I zstd/zlibWrapper/ -I zstd/lib/ -lm -lz zstd/lib/libzstd.a'
+
 echo_test 'unit test helpers'
-if gcc -Wall -g -std=gnu99 test/unit_test_helpers.c -o test/bin/unit_test_helpers src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_helpers.c -o test/bin/unit_test_helpers $compile; then
     if ! ex test/bin/unit_test_helpers; then
         fail
     fi
@@ -81,7 +83,7 @@ else
 fi
 
 echo_test 'unit test press'
-if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/slow5_press.c src/slow5_misc.c src/slow5.c  src/slow5_idx.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_press.c -o test/bin/unit_test_press $compile; then
     if ! ex test/bin/unit_test_press > test/data/out/unit_test_out_press; then
         fail
     fi
@@ -90,7 +92,7 @@ else
 fi
 
 echo_test 'unit test ascii'
-if gcc -Wall -g -std=gnu99 test/unit_test_ascii.c -o test/bin/unit_test_ascii src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_ascii.c -o test/bin/unit_test_ascii $compile; then
     if ! ex test/bin/unit_test_ascii > test/data/out/unit_test_out_ascii; then
         fail
     fi
@@ -100,7 +102,7 @@ fi
 
 
 echo_test 'unit test binary'
-if gcc -Wall -g -std=gnu99 test/unit_test_binary.c -o test/bin/unit_test_binary src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_binary.c -o test/bin/unit_test_binary $compile; then
     if ! ex test/bin/unit_test_binary > test/data/out/unit_test_out_binary; then
         fail
     fi
@@ -109,7 +111,7 @@ else
 fi
 
 echo_test 'slow5 conversion test'
-if gcc -Wall -g -std=gnu99 test/convert_slow5_test.c -o test/bin/convert_slow5_test src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/convert_slow5_test.c -o test/bin/convert_slow5_test $compile; then
     if ! ex test/bin/convert_slow5_test; then
         fail
     fi
@@ -118,7 +120,7 @@ else
 fi
 
 echo_test 'unit test two read groups'
-if gcc -Wall -g -std=gnu99 test/unit_test_two_rg.c -o test/bin/unit_test_two_rg src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_two_rg.c -o test/bin/unit_test_two_rg $compile; then
     if ! ex test/bin/unit_test_two_rg > test/data/out/unit_test_out_two_rg; then
         fail
     fi
@@ -127,7 +129,7 @@ else
 fi
 
 echo_test 'unit test lossless'
-if gcc -Wall -g -std=gnu99 test/unit_test_lossless.c -o test/bin/unit_test_lossless src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_lossless.c -o test/bin/unit_test_lossless $compile; then
     if ! ex test/bin/unit_test_lossless > test/data/out/unit_test_out_lossless; then
         fail
     fi
@@ -136,7 +138,7 @@ else
 fi
 
 echo_test 'unit test empty'
-if gcc -Wall -g -std=gnu99 test/unit_test_empty.c -o test/bin/unit_test_empty src/slow5.c src/slow5_misc.c src/slow5_idx.c src/slow5_press.c -I include/ -I src/ -I zlibWrapper/ lib/zstd_zlibwrapper.o zlibWrapper/gz*.c -lzstd -lm -lz; then
+if gcc test/unit_test_empty.c -o test/bin/unit_test_empty $compile; then
     if ! ex test/bin/unit_test_empty > test/data/out/unit_test_out_empty; then
         fail
     fi

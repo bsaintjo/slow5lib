@@ -1,8 +1,10 @@
 CC			= gcc
 AR			= ar
-CPPFLAGS	+= -I include/ -I zlibWrapper/
+ZSTD_BUILD_DIR	= zstd/lib
+ZSTD_WRAP_DIR	= zstd/zlibWrapper
+CPPFLAGS	+= -I include/ -I $(ZSTD_BUILD_DIR) -I $(ZSTD_WRAP_DIR)
 CFLAGS		+= -g -Wall -O2 -std=c99 -DZWRAP_USE_ZSTD=1
-LDFLAGS		+= -lm -lz -lzstd
+LDFLAGS		+= -lm -lz
 BUILD_DIR	= lib
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
@@ -19,15 +21,18 @@ SLOW5_H = include/slow5/slow5.h include/slow5/klib/khash.h include/slow5/klib/kv
 .PHONY: clean distclean test install uninstall slow5lib
 
 #libslow5
-slow5lib: $(BUILD_DIR)/libslow5.so $(BUILD_DIR)/libslow5.a
+slow5lib: $(BUILD_DIR)/libslow5.so $(BUILD_DIR)/libslow5.a $(ZSTD_BUILD_DIR)/libzstd.a
 
-$(BUILD_DIR)/libslow5.so: $(OBJ_LIB) zlibWrapper/gz*.c
-	$(CC) $(CFLAGS) -shared $^  -o $@ $(LDFLAGS)
+$(ZSTD_BUILD_DIR)/libzstd.a:
+	make -C zstd
 
-$(BUILD_DIR)/libslow5.a: $(OBJ_LIB) zlibWrapper/gz*.c
+$(BUILD_DIR)/libslow5.so: $(OBJ_LIB) $(ZSTD_WRAP_DIR)/gz*.c
+	$(CC) $(CFLAGS) -shared -fpic $^ -o $@ $(LDFLAGS)
+
+$(BUILD_DIR)/libslow5.a: $(OBJ_LIB) $(ZSTD_WRAP_DIR)/gz*.c
 	$(AR) rcs $@ $^
 
-$(BUILD_DIR)/zstd_zlibwrapper.o: zlibWrapper/zstd_zlibwrapper.c zlibWrapper/zstd_zlibwrapper.h
+$(BUILD_DIR)/zstd_zlibwrapper.o: $(ZSTD_WRAP_DIR)/zstd_zlibwrapper.c $(ZSTD_WRAP_DIR)/zstd_zlibwrapper.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
 $(BUILD_DIR)/slow5.o: src/slow5.c src/slow5_extra.h src/slow5_idx.h src/slow5_misc.h src/klib/ksort.h $(SLOW5_H)
@@ -44,6 +49,7 @@ $(BUILD_DIR)/slow5_press.o: src/slow5_press.c include/slow5/slow5_press.h src/sl
 
 clean:
 	rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/libslow5.so $(BUILD_DIR)/libslow5.a
+	make -C zstd clean
 
 # Delete all gitignored files (but not directories)
 distclean: clean
