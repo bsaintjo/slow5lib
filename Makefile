@@ -1,14 +1,15 @@
 CC			= gcc
 AR			= ar
-CPPFLAGS	+= -I include/
-CFLAGS		+= -g -Wall -O2 -std=c99
-LDFLAGS		+=  -lm -lz
+CPPFLAGS	+= -I include/ -I zlibWrapper/
+CFLAGS		+= -g -Wall -O2 -std=c99 -DZWRAP_USE_ZSTD=1
+LDFLAGS		+= -lm -lz -lzstd
 BUILD_DIR	= lib
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
 		$(BUILD_DIR)/slow5_idx.o	\
 		$(BUILD_DIR)/slow5_misc.o	\
 		$(BUILD_DIR)/slow5_press.o \
+		$(BUILD_DIR)/zstd_zlibwrapper.o \
 
 PREFIX = /usr/local
 VERSION = `git describe --tags`
@@ -20,11 +21,14 @@ SLOW5_H = include/slow5/slow5.h include/slow5/klib/khash.h include/slow5/klib/kv
 #libslow5
 slow5lib: $(BUILD_DIR)/libslow5.so $(BUILD_DIR)/libslow5.a
 
-$(BUILD_DIR)/libslow5.so: $(OBJ_LIB)
+$(BUILD_DIR)/libslow5.so: $(OBJ_LIB) zlibWrapper/gz*.c
 	$(CC) $(CFLAGS) -shared $^  -o $@ $(LDFLAGS)
 
-$(BUILD_DIR)/libslow5.a: $(OBJ_LIB)
+$(BUILD_DIR)/libslow5.a: $(OBJ_LIB) zlibWrapper/gz*.c
 	$(AR) rcs $@ $^
+
+$(BUILD_DIR)/zstd_zlibwrapper.o: zlibWrapper/zstd_zlibwrapper.c zlibWrapper/zstd_zlibwrapper.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
 $(BUILD_DIR)/slow5.o: src/slow5.c src/slow5_extra.h src/slow5_idx.h src/slow5_misc.h src/klib/ksort.h $(SLOW5_H)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@

@@ -43,7 +43,9 @@ SOFTWARE.
 #ifndef SLOW5_PRESS_H
 #define SLOW5_PRESS_H
 
-#include <zlib.h>
+/*#include <zlib.h>*/
+#define ZWRAP_USE_ZSTD 1
+#include <zstd_zlibwrapper.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>

@@ -1,5 +1,7 @@
 #define _XOPEN_SOURCE 700
-#include <zlib.h>
+/*#include <zlib.h>*/
+#define ZWRAP_USE_ZSTD 1
+#include <zstd_zlibwrapper.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
