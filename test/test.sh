@@ -58,11 +58,12 @@ prep_unit() {
 }
 
 ret=0
+compile='-Wall -g -std=gnu99 lib/*.o zstd/zlibWrapper/gz*.c -I include/ -I src/ -I zstd/zlibWrapper/ -I zstd/lib/ -lm -lz zstd/lib/libzstd.a'
 
 prep
 
 echo_test 'endian test'
-if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
+if gcc test/endian_test.c -o test/bin/endian_test $compile; then
     ex test/bin/endian_test
 else
     not_compiled
@@ -70,8 +71,6 @@ fi
 
 
 prep_unit
-
-compile='-Wall -g -std=gnu99 lib/*.o zstd/zlibWrapper/gz*.c -I include/ -I src/ -I zstd/zlibWrapper/ -I zstd/lib/ -lm -lz zstd/lib/libzstd.a'
 
 echo_test 'unit test helpers'
 if gcc test/unit_test_helpers.c -o test/bin/unit_test_helpers $compile; then
