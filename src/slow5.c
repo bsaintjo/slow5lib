@@ -43,6 +43,10 @@ SOFTWARE.
 #include "slow5_misc.h"
 #include "klib/ksort.h"
 
+//delete@hiruna
+#include <sys/resource.h>
+#include <sys/time.h>
+
 KSORT_INIT(str_slow5, ksstr_t, ks_lt_str)
 
 
@@ -77,6 +81,18 @@ enum slow5_log_level_opt slow5_log_level = SLOW5_LOG_INFO;
 enum slow5_exit_condition_opt slow5_exit_condition = SLOW5_EXIT_OFF;
 
 __thread int slow5_errno_intern = 0;
+
+//delete @hiruna
+double time_fread_record_length = 0;
+double time_fread_record = 0;
+// Timing
+// From minimap2/misc
+static inline double slow5_realtime2(void) {
+    struct timeval tp;
+//    struct timezone tzp;
+    gettimeofday(&tp, NULL);
+    return tp.tv_sec + tp.tv_usec * 1e-6;
+}
 
 inline int *slow5_errno_location(void) {
     return &slow5_errno_intern;
@@ -2877,6 +2893,7 @@ void *slow5_get_next_mem(size_t *n, const struct slow5_file *s5p) {
     } else if (s5p->format == SLOW5_FORMAT_BINARY) {
         slow5_rec_size_t bytes_tmp;
         size_t bytes_read;
+        double realtime = slow5_realtime2();
         /* try to read the record size */
         if ((bytes_read = fread(&bytes_tmp, 1, sizeof bytes_tmp, s5p->fp)) != sizeof bytes_tmp) {
             const char eof[] = SLOW5_BINARY_EOF;
@@ -2903,6 +2920,7 @@ void *slow5_get_next_mem(size_t *n, const struct slow5_file *s5p) {
             goto err;
         }
         bytes = bytes_tmp;
+        time_fread_record_length += slow5_realtime2() - realtime;
 
         mem = (char *) malloc(bytes);
         if (!mem) {
@@ -2910,7 +2928,7 @@ void *slow5_get_next_mem(size_t *n, const struct slow5_file *s5p) {
             slow5_errno = SLOW5_ERR_MEM;
             goto err;
         }
-
+        realtime = slow5_realtime2();
         if (fread(mem, bytes, 1, s5p->fp) != 1) {
             SLOW5_ERROR("Malformed blow5 record. Failed to read '%zu' bytes from blow5 file '%s'.%s",
                     bytes, s5p->meta.pathname, feof(s5p->fp) ? " EOF reached unexpectedly." : "");
@@ -2922,6 +2940,7 @@ void *slow5_get_next_mem(size_t *n, const struct slow5_file *s5p) {
             free(mem);
             goto err;
         }
+        time_fread_record += slow5_realtime2() - realtime;
 
     } else {
         SLOW5_ERROR("Invalid slow5 format '%d'.", s5p->format);
