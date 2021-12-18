@@ -46,6 +46,7 @@ SOFTWARE.
 //delete@hiruna
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <fcntl.h>
 
 KSORT_INIT(str_slow5, ksstr_t, ks_lt_str)
 
@@ -68,6 +69,8 @@ KSORT_INIT(str_slow5, ksstr_t, ks_lt_str)
 #define SLOW5_AUX_ENUM_LABELS_CAP_INIT (32) /* Initial capacity for the number of enum labels: 2^5 */
 #define SLOW5_AUX_ARRAY_CAP_INIT (256) /* Initial capacity for parsing auxiliary array: 2^8 */
 #define SLOW5_AUX_ARRAY_STR_CAP_INIT (1024) /* Initial capacity for storing auxiliary array string: 2^10 */
+
+#define BUFF_SIZE 131072 //https://github.com/coreutils/coreutils/blob/master/src/ioblksize.h
 
 static inline void slow5_free(struct slow5_file *s5p);
 static int slow5_rec_aux_parse(char *tok, char *read_mem, uint64_t offset, size_t read_size, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta);
@@ -93,6 +96,7 @@ static inline double slow5_realtime2(void) {
     gettimeofday(&tp, NULL);
     return tp.tv_sec + tp.tv_usec * 1e-6;
 }
+char buff[BUFF_SIZE];
 
 inline int *slow5_errno_location(void) {
     return &slow5_errno_intern;
@@ -290,7 +294,16 @@ struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum 
         slow5_errno = SLOW5_ERR_IO;
         return NULL;
     }
-
+    int input_desc = fileno(fp);
+    memset( buff, '\0', sizeof( buff ));
+    int ret_setvbuf = setvbuf(fp, buff, _IOFBF, BUFF_SIZE);
+    if(ret_setvbuf){
+        SLOW5_ERROR("setvbuf failed '%s': %s.", pathname, strerror(errno));
+    }
+    int fadvise_ret = posix_fadvise(input_desc, 0, 0, POSIX_FADV_SEQUENTIAL);
+    if(fadvise_ret){
+        SLOW5_ERROR("Posix_fadvise failed '%s': %s.", pathname, strerror(errno));
+    }
     struct slow5_file *s5p = slow5_init(fp, pathname, format);
     if (!s5p) {
         if (fclose(fp) == EOF) {
